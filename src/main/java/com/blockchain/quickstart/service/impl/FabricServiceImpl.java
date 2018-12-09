@@ -34,7 +34,7 @@ public class FabricServiceImpl implements FabricService {
             HFClient client = getHfClient();
             client.setUserContext(user);
 
-            Channel channel = client.loadChannelFromConfig("channela", networkConfig);
+            Channel channel = client.loadChannelFromConfig("mychannel", networkConfig);
             // in case EventHub error thrown in channel creation with multi-organization
             // Bug report: https://jira.hyperledger.org/browse/FABJ-175
             // See: https://github.com/davidkhala/fabric-sdk-android/blob/master/src/main/java/org/hyperledger/fabric/sdk/EventHub.java#L436
@@ -47,11 +47,11 @@ public class FabricServiceImpl implements FabricService {
             // create chaincode request
             QueryByChaincodeRequest request = client.newQueryProposalRequest();
             // build cc id providing the chaincode name. Version is omitted here.
-            ChaincodeID fabcarCCId = ChaincodeID.newBuilder().setName("pocc").build();
+            ChaincodeID fabcarCCId = ChaincodeID.newBuilder().setName("mycc").build();
             request.setChaincodeID(fabcarCCId);
             // CC function to be called
-            request.setFcn("queryPO");
-            request.setArgs("poNo001");
+            request.setFcn("query");
+            request.setArgs("a");
             Collection<ProposalResponse> proposalResponses = channel.queryByChaincode(request);
 
             // display response
@@ -122,7 +122,9 @@ public class FabricServiceImpl implements FabricService {
         context.setName("admin");
         context.setAffiliation("org1.department1");
         context.setMspId(org.getMspId());
-        context.setEnrollment(hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret()));
+        Enrollment enrollment = hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret());
+//        Enrollment idemixEnrollment = hfcaClient.idemixEnroll(enrollment, "idemixMSPID1");
+        context.setEnrollment(enrollment);
         return context;
     }
 
