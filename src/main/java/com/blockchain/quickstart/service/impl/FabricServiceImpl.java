@@ -30,7 +30,8 @@ public class FabricServiceImpl implements FabricService {
     public String queryChaincode() {
         try {
 
-            UserContext user = getAdmin("Org1");
+//            UserContext user = getAdmin("Org1");
+            UserContext user = enrollUser("johndoe", "Org1");
             HFClient client = getHfClient();
             client.setUserContext(user);
 
@@ -96,14 +97,20 @@ public class FabricServiceImpl implements FabricService {
 
         Collection<NetworkConfig.UserInfo> registrars = caInfo.getRegistrars();
         NetworkConfig.UserInfo registrar = registrars.iterator().next();
-        registrar.setEnrollment(hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret()));
+        Enrollment adminEnroll = hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret());
+        registrar.setEnrollment(adminEnroll);
+
         UserContext context = new UserContext();
         context.setName(userName);
         // See: https://stackoverflow.com/questions/48836728/unable-to-enroll-user-in-new-org-added-to-balance-transfer-sample
         context.setAffiliation("org1.department1");
         context.setMspId(org.getMspId());
         RegistrationRequest rr = new RegistrationRequest(context.getName(), context.getAffiliation());
-        context.setEnrollment(hfcaClient.enroll(context.getName(), hfcaClient.register(rr, registrar)));
+        Enrollment userEnroll = hfcaClient.enroll(context.getName(), hfcaClient.register(rr, registrar));
+//        context.setEnrollment(userEnroll);
+        Enrollment idemixEnrollment = hfcaClient.idemixEnroll(userEnroll, "Org1Idemix");
+        context.setEnrollment(idemixEnrollment);
+
         return context;
     }
 
@@ -123,7 +130,6 @@ public class FabricServiceImpl implements FabricService {
         context.setAffiliation("org1.department1");
         context.setMspId(org.getMspId());
         Enrollment enrollment = hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret());
-//        Enrollment idemixEnrollment = hfcaClient.idemixEnroll(enrollment, "idemixMSPID1");
         context.setEnrollment(enrollment);
         return context;
     }

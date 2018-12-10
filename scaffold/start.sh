@@ -130,13 +130,13 @@ function generateGenesisBlock() {
   rm -rf idemix-config
   idemixgen ca-keygen
   idemixgen signerconfig -u OrgUnit1 --admin -e "johndoe" -r 1234
-  mkdir -p crypto-config/peerOrganizations/org3.example.com
-  cp -r idemix-config/* crypto-config/peerOrganizations/org3.example.com/
+  # mkdir -p crypto-config/peerOrganizations/org3.example.com
+  cp -r idemix-config/* crypto-config/peerOrganizations/org1.example.com/
   rm -rf idemix-config
   idemixgen ca-keygen
   idemixgen signerconfig -u OrgUnit2 --admin -e "johndoe" -r 1234
-  mkdir -p crypto-config/peerOrganizations/org4.example.com
-  cp -r idemix-config/* crypto-config/peerOrganizations/org4.example.com/
+  # mkdir -p crypto-config/peerOrganizations/org4.example.com
+  cp -r idemix-config/* crypto-config/peerOrganizations/org2.example.com/
   rm -rf idemix-config
 
   configtxgen --configPath ./ -profile TwoOrgsOrdererGenesis_v13 -outputBlock ./channel-artifacts/genesis.block

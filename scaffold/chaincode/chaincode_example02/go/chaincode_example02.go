@@ -1,34 +1,15 @@
-/*
-Copyright IBM Corp. 2016 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-		 http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package main
-
-//WARNING - this chaincode's ID is hard-coded in chaincode_example04 to illustrate one way of
-//calling chaincode from a chaincode. If this example is modified, chaincode_example04.go has
-//to be modified as well with the new ID of chaincode_example02.
-//chaincode_example05 show's how chaincode ID can be passed in as a parameter instead of
-//hard-coding.
 
 import (
 	"fmt"
 	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric/core/chaincode/shim/ext/cid"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
+
+var logger = shim.NewLogger("chaincode")
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -172,6 +153,48 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Incorrect number of arguments. Expecting name of the person to query")
 	}
 
+	logger.Debug("Now let's test the cid: ")
+
+	cidStub, err := cid.New(stub)
+	if err != nil {
+		logger.Error("Get create ID from stub: " + err.Error())
+		return shim.Error(err.Error())
+	}
+
+	id, err := cidStub.GetID()
+	if err != nil {
+		logger.Error("Get stub id error: " + err.Error())
+	} else {
+		logger.Debug("Get ID: " + id)
+	}
+
+	mspId, err := cidStub.GetMSPID()
+	if err != nil {
+		logger.Error("Get mspId error: " + err.Error())
+	} else {
+		logger.Debug("Get msp Id: " + mspId)
+	}
+
+	val, ok, err := cidStub.GetAttributeValue("attr1")
+	if err != nil {
+		logger.Error("Get attribute error: " + err.Error())
+	} else if !ok {
+		// The client identity does not possess the attribute
+		logger.Error("The client identity does not possess the attribute.")
+	} else {
+		logger.Debug("Get attribute value: " + val)
+	}
+
+	cert, err := cidStub.GetX509Certificate()
+	if err != nil {
+		logger.Error("Get x509 cert error: " + err.Error())
+	}
+	if cert == nil {
+		logger.Error("Do not get any x509 cert, it was not identified by an X509 certificate.")
+	} else {
+		logger.Debug("Get x509 cert: " + cert.Issuer.CommonName)
+	}
+
 	A = args[0]
 
 	// Get the state from the ledger
@@ -197,4 +220,3 @@ func main() {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
 }
-
