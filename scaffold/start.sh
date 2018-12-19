@@ -50,6 +50,25 @@ function prepareCAFile () {
   echo "Finished."
 }
 
+function startCA() {
+  docker-compose -f docker-compose-e2e.yaml up -d ca0 ca1
+}
+
+function updateIdemixKey() {
+  sleep 5
+  IDEMIXDIR="crypto-config/peerOrganizations/org3.example.com/msp/"
+  mkdir -p $IDEMIXDIR
+  docker cp ca.org1.example.com:/etc/hyperledger/fabric-ca-server/IssuerPublicKey $IDEMIXDIR
+  docker cp ca.org1.example.com:/etc/hyperledger/fabric-ca-server/IssuerRevocationPublicKey $IDEMIXDIR/RevocationPublicKey
+  docker cp ca.org1.example.com:/etc/hyperledger/fabric-ca-server/msp/keystore $IDEMIXDIR
+
+  IDEMIXDIR="crypto-config/peerOrganizations/org4.example.com/msp/"
+  mkdir -p $IDEMIXDIR
+  docker cp ca.org2.example.com:/etc/hyperledger/fabric-ca-server/IssuerPublicKey $IDEMIXDIR
+  docker cp ca.org2.example.com:/etc/hyperledger/fabric-ca-server/IssuerRevocationPublicKey $IDEMIXDIR/RevocationPublicKey
+  docker cp ca.org2.example.com:/etc/hyperledger/fabric-ca-server/msp/keystore $IDEMIXDIR
+}
+
 # Got a path parameter, and then return it's content parsed with '\n'
 function getFileParse() {
   local FILEPATH=$1
@@ -127,17 +146,6 @@ function generateGenesisBlock() {
   # Note: For some unknown reason (at least for now) the block file can't be
   # named orderer.genesis.block or the orderer will fail to launch!
   set -x
-  rm -rf idemix-config
-  idemixgen ca-keygen
-  idemixgen signerconfig -u OrgUnit1 --admin -e "johndoe" -r 1234
-  # mkdir -p crypto-config/peerOrganizations/org3.example.com
-  cp -r idemix-config/* crypto-config/peerOrganizations/org1.example.com/
-  rm -rf idemix-config
-  idemixgen ca-keygen
-  idemixgen signerconfig -u OrgUnit2 --admin -e "johndoe" -r 1234
-  # mkdir -p crypto-config/peerOrganizations/org4.example.com
-  cp -r idemix-config/* crypto-config/peerOrganizations/org2.example.com/
-  rm -rf idemix-config
 
   configtxgen --configPath ./ -profile TwoOrgsOrdererGenesis_v13 -outputBlock ./channel-artifacts/genesis.block
   res=$?
@@ -222,11 +230,11 @@ function prepareEnv() {
     sed -i "s/orderer.example.com:7050/localhost:7050/g" "$configFile"
     sed -i "s/peer0.org1.example.com:7051/localhost:7051/g" "$configFile"
     sed -i "s/peer0.org1.example.com:7053/localhost:7053/g" "$configFile"
-    sed -i "s/peer1.org1.example.com:7051/localhost:8051/g" "$configFile"
+    sed -i "s/peer1.org1.example.com:8051/localhost:8051/g" "$configFile"
     sed -i "s/peer1.org1.example.com:7053/localhost:8053/g" "$configFile"
-    sed -i "s/peer0.org2.example.com:7051/localhost:9051/g" "$configFile"
+    sed -i "s/peer0.org2.example.com:9051/localhost:9051/g" "$configFile"
     sed -i "s/peer0.org2.example.com:7053/localhost:9053/g" "$configFile"
-    sed -i "s/peer1.org2.example.com:7051/localhost:10051/g" "$configFile"
+    sed -i "s/peer1.org2.example.com:10051/localhost:10051/g" "$configFile"
     sed -i "s/peer1.org2.example.com:7053/localhost:10053/g" "$configFile"
     # sed -i "s/peer0.org3.example.com:7051/localhost:11051/g" "$configFile"
     # sed -i "s/peer0.org3.example.com:7053/localhost:11053/g" "$configFile"
@@ -256,8 +264,11 @@ function networkUp() {
 
 generateCerts
 prepareCAFile
+startCA
+updateIdemixKey
 prepareConnectionFileCerts
 generateGenesisBlock
 generateChannelArtifacts
 prepareEnv
 networkUp
+

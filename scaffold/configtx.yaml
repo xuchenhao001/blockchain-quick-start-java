@@ -65,7 +65,7 @@ Organizations:
             # for cross org gossip communication.  note, this value is only
             # encoded in the genesis block in the application section context
             - host: peer0.org2.example.com
-              port: 8051
+              port: 9051
 
     - &Org1Idemix
         # defaultorg defines the organization which is used in the sampleconfig

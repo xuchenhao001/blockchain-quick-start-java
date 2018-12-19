@@ -31,7 +31,7 @@ public class FabricServiceImpl implements FabricService {
         try {
 
 //            UserContext user = getAdmin("Org1");
-            UserContext user = enrollUser("johndoe", "Org1");
+            UserContext user = enrollUser("johndoe3", "Org1");
             HFClient client = getHfClient();
             client.setUserContext(user);
 
@@ -97,7 +97,8 @@ public class FabricServiceImpl implements FabricService {
 
         Collection<NetworkConfig.UserInfo> registrars = caInfo.getRegistrars();
         NetworkConfig.UserInfo registrar = registrars.iterator().next();
-        Enrollment adminEnroll = hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret());
+//        Enrollment adminEnroll = hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret());
+        Enrollment adminEnroll = hfcaClient.enroll("admin", "adminpw");
         registrar.setEnrollment(adminEnroll);
 
         UserContext context = new UserContext();
@@ -106,9 +107,11 @@ public class FabricServiceImpl implements FabricService {
         context.setAffiliation("org1.department1");
         context.setMspId(org.getMspId());
         RegistrationRequest rr = new RegistrationRequest(context.getName(), context.getAffiliation());
-        Enrollment userEnroll = hfcaClient.enroll(context.getName(), hfcaClient.register(rr, registrar));
+        String secret = hfcaClient.register(rr, registrar);
+        logger.debug("Register user got secret: " + secret);
+        Enrollment userEnroll = hfcaClient.enroll(context.getName(), secret);
 //        context.setEnrollment(userEnroll);
-        Enrollment idemixEnrollment = hfcaClient.idemixEnroll(userEnroll, "Org1Idemix");
+        Enrollment idemixEnrollment = hfcaClient.idemixEnroll(userEnroll, "idemixMSPID1");
         context.setEnrollment(idemixEnrollment);
 
         return context;
