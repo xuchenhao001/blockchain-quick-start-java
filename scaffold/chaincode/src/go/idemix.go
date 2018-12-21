@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/chaincode/shim/ext/cid"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"strconv"
 )
 
 var logger = shim.NewLogger("chaincode")
@@ -161,28 +160,19 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error(err.Error())
 	}
 
-	id, err := cidStub.GetID()
+	// cannot get Id if use idemix
+	/*id, err := cidStub.GetID()
 	if err != nil {
 		logger.Error("Get stub id error: " + err.Error())
 	} else {
 		logger.Debug("Get ID: " + id)
-	}
+	}*/
 
 	mspId, err := cidStub.GetMSPID()
 	if err != nil {
 		logger.Error("Get mspId error: " + err.Error())
 	} else {
 		logger.Debug("Get msp Id: " + mspId)
-	}
-
-	val, ok, err := cidStub.GetAttributeValue("attr1")
-	if err != nil {
-		logger.Error("Get attribute error: " + err.Error())
-	} else if !ok {
-		// The client identity does not possess the attribute
-		logger.Error("The client identity does not possess the attribute.")
-	} else {
-		logger.Debug("Get attribute value: " + val)
 	}
 
 	cert, err := cidStub.GetX509Certificate()
@@ -192,7 +182,32 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 	if cert == nil {
 		logger.Error("Do not get any x509 cert, it was not identified by an X509 certificate.")
 	} else {
-		logger.Debug("Get x509 cert: " + cert.Issuer.CommonName)
+		logger.Debug("Get x509 cert issuer: " + cert.Issuer.CommonName)
+		logger.Debug("Get x509 cert subject: " + cert.Subject.CommonName)
+	}
+
+	// there are only two attributes which are disclosed in the Idemix case: ou and role.
+	// Getting attributes from an idemix credential
+	// See: https://github.com/hyperledger/fabric-sdk-java/blob/release-1.3/src/
+	// test/fixture/sdkintegration/gocc/sampleIdemix/src/github.com/example_cc/example_cc.go
+	ou, found, err := cidStub.GetAttributeValue("ou")
+	if err != nil {
+		logger.Error("Failed to get attribute 'ou'")
+	}
+	if !found {
+		logger.Error("attribute 'ou' not found")
+	} else {
+		logger.Debug("Get 'ou' attribute value: " + ou)
+	}
+
+	role, found, err := cidStub.GetAttributeValue("role")
+	if err != nil {
+		logger.Error("Failed to get attribute 'role'")
+	}
+	if !found {
+		logger.Error("attribute 'role' not found")
+	} else {
+		logger.Debug("Get 'role' attribute value:" + role)
 	}
 
 	A = args[0]
